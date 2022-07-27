@@ -1,0 +1,189 @@
+Logistic regression: 24/03
+# For the Categorical Variables Columns More than 2 categories, try to Do One Hot Encoding
+# One-Hot Encoding of Categorical variables more than 3
+
+bank1 = pd.get_dummies(bank, columns=['job','marital','education','contact','poutcome','month'])
+bank1
+
+
+
+# To see all columns in the df
+pd.set_option("display.max.columns", None)
+bank1
+
+
+
+
+# using Binary Encoding of Binary response variables for the all the required columns
+import numpy as np
+
+bank1['default'] = np.where(bank1['default'].str.contains("yes"), 1, 0)
+bank1['housing'] = np.where(bank1['housing'].str.contains("yes"), 1, 0)
+bank1['loan'] = np.where(bank1['loan'].str.contains("yes"), 1, 0)
+bank1['y'] = np.where(bank1['y'].str.contains("yes"), 1, 0)
+bank1
+
+
+
+
+# Divide the Data in X and Y variable
+X = pd.concat([bank1.iloc[:,:10], bank1.iloc[:,11:]], axis=1)
+
+
+
+Y = bank1.iloc[:,10]  #10th column is my Y(target/termDeposit variable)
+
+
+
+#Logistic regression and fit the model   
+# from sklearn.linear_model import LogisticRegression
+
+classifier = LogisticRegression()  # LogisticRegression function
+classifier.fit(X,Y)                # model.fit   fit is a method we use this to find 
+
+
+
+classifier.intercept_   # Intercept is ß0    (reg equarion :Y(TermDeposit)= ßo + ß1x1+ ß2x2 + ß3x3 + ß4x4 + ß5x5
+
+classifier.coef_   # model coefficients are ß1, ß2, ß3, ß4, ß5,...
+
+
+
+y_pred = classifier.predict(X)    #Yi^  predicted_values
+y_pred
+
+
+
+y_pred_df = pd.DataFrame({'actual': Y,
+                         'predicted_values': classifier.predict(X)})
+y_pred_df  # Now i got the actual classes Y(TermDeposit) and Predicted Y^ values
+
+
+
+           # Accuracy
+# Confusion Matrix for the model accuracy
+from sklearn.metrics import confusion_matrix  # It is for the Confusion Matrix
+
+confusion_matrix = confusion_matrix(Y , y_pred)
+print (confusion_matrix)   #[[TP FP]]
+                                              #[[FN TN]]
+
+
+
+
+from sklearn.metrics import accuracy_score as ac  # It is for the Accuracy percentage
+ac(Y,y_pred)
+
+Manual way
+# 0.891~ 89 % accuracy   -> (TP+TN)/(TP+FN+FP+TN) (39164+758)/(39164+758+4147+1142) = 
+(39164+1142)/(39164+758+4147+1142)
+
+
+
+
+#Classification report
+from sklearn.metrics import classification_report
+
+print(classification_report(Y,y_pred))
+
+#reading the Below output table
+# Class 0 (Not Subscribed for termDeposit) Precision & recall
+# Class 1(Subscribed for termDeposit ) Precision & recall
+
+# Support: 39922 -> 0 (these many People Not Subscribed for termDeposit)
+# Support: 5289 -> 1 (these many People Subscribed for termDeposit)
+
+# Support for Class 0/ class1-> total amount of data/observations which belongs to class0 /class1
+
+
+
+
+
+# As accuracy = 0.8915, which is greater than 0.5; Thus [:,1] Threshold value>0.5=1 else [:,0] Threshold value<0.5=0 
+
+classifier.predict_proba(X)[:,1]
+
+
+
+
+from sklearn.metrics import roc_curve  #from sklearn.metrics module we are importing roc_curve
+from sklearn.metrics import roc_auc_score
+
+fpr, tpr, thresholds = roc_curve(Y, classifier.predict_proba (X)[:,1]) #all the Fp values and TP rate
+auc = roc_auc_score(Y, y_pred)
+
+import matplotlib.pyplot as plt
+plt.plot(fpr, tpr, color='red', label='logit model ( area  = %0.2f)' %auc) 
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlabel('False Positive Rate or [1 - True Negative Rate]')
+plt.ylabel('True Positive Rate')
+plt.legend(loc="best")
+plt.show()
+
+
+
+
+
+
+
+                                                              # using Train-Test Split 
+# generally we use this for classifying between more that 3 Things for Multiple Classes Logistic regression
+
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score as ac
+
+X
+Y
+
+X_train,X_test, Y_train,Y_test = train_test_split(X,Y, test_size=0.3, shuffle=True)
+
+
+
+
+#Logistic regression and fit the model
+classifier = LogisticRegression()
+classifier.fit(X_train,Y_train)
+
+
+
+
+Y_train_pred = classifier.predict(X_train)
+
+
+
+
+# from sklearn.metrics import accuracy_score as ac
+
+ac(Y_train,Y_train_pred)
+# Training Data accuracy is 88%
+
+
+
+
+Y_test_pred=classifier.predict(X_test)
+Y_test_pred
+
+
+ac(Y_test_pred,Y_test)
+# Testing Data accuracy is 88%
+
+
+
+classifier.intercept_
+classifier.coef_
+
+
+set(Y_train)
+
+confusion_matrix(Y_test_pred,Y_test)
+
+print(classification_report(Y_test_pred,Y_test))
+->~89%
+
+
+
+
+
+
